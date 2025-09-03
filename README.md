@@ -1,6 +1,6 @@
 # 💸 Tkinter Expense Tracker
 
-### A lightweight expense tracker built with Python and Tkinter, featuring live currency conversion and a simple graphical interface.
+### A lightweight expense tracker built with Python and Tkinter/Custom Tkinter, featuring live currency conversion and a simple graphical interface.
 ### Easily add, edit, and delete expenses, while keeping track of totals in your preferred currency.
 
 ## ✨ Features
@@ -21,7 +21,7 @@
 
 - Python 3
 
-- Tkinter (GUI)
+- Tkinter/Custom Tkinter (GUI)
 
 - Requests (API calls)
 

@@ -1,4 +1,5 @@
 import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox
 import requests
 import json
@@ -19,8 +20,7 @@ def gen_config():
                               "fg": "#ffffff",
                               "activebg": "#727272",
                               "activefg": "black",
-                              "border": 0,
-                              "highlightthickness": 0
+                              "corner_radius": 35
                           },
                           "window_style": {
                               "bg": "#3b3d3c"
@@ -42,12 +42,17 @@ def load_config():
 
 load_config()
 
-class tk_Button:
-    global config
+class Button:
     button_style = config["button_style"]
-    def __init__(self, text: str , width: int , height: int, x , y , command=lambda: None , border=button_style["border"], highlightthickness=button_style["highlightthickness"] , bg=button_style["bg"] , fg=button_style["fg"] , activebg=button_style["activebg"] , activefg=button_style["activefg"] , root=None):
-        self.button = tk.Button(root , text=text , width=width , height=height , bd=border , highlightthickness=highlightthickness , bg=bg , fg=fg , activebackground=activebg , activeforeground=activefg , command=lambda: command())
-        self.button.place(x=x , y=y)
+    def __init__(self, text: str , color=(button_style["bg"] , button_style["activebg"]) , corner_radius=button_style["corner_radius"] , size=(50 , 50) , pos=(0 , 0) , command=lambda: None , font=("arial" , 15 , "bold") , root=None):
+        self.button = ctk.CTkButton(root , text=text , fg_color=color[0] , hover_color=color[1] , font=font , corner_radius=corner_radius, width=size[0] , height=size[1] , command=lambda: command())
+        self.button.place(x=pos[0] , y=pos[1])
+
+class Entry:
+    button_style = config["button_style"]
+    def __init__(self , textvariable , size=(30 , 10) , pos=(0 , 0) , width=10 , root=None):
+        self.entry = ctk.CTkEntry(root , textvariable=textvariable , width=size[0] , height=size[1])
+        self.entry.place(x=pos[0] , y=pos[1])
 
 def get_convertion_rates():
     global convertion_rates
@@ -124,8 +129,8 @@ def add_new():
 
     user_input_currency.set("Select A Currency")
 
-    amount_of_money_spent = tk.Entry(prompt_window , width=5 , textvariable=user_input_amount)
-    amount_of_money_spent.place(x=65 , y=10)
+    amount_of_money_spent = Entry(root=prompt_window , textvariable=user_input_amount , size=(40 , 5) , pos=(65 , 10))
+
     aoms_label = tk.Label(prompt_window , text="Amount" , bg="#3b3d3c" , fg="white")
     aoms_label.place(x=5 , y=10)
 
@@ -134,21 +139,18 @@ def add_new():
     currency["menu"].config(bg="#ffffff" , fg="black" , activebackground="gray")
     currency.place(x=125 , y=10) 
 
-    reason = tk.Entry(prompt_window , width=20 , textvariable=user_input_reason)
-    reason.place(x=65 , y=50)
+    reason = Entry(root=prompt_window , size=(160 , 5) , pos=(65 , 50) , textvariable=user_input_reason)
     reason_label = tk.Label(prompt_window , text="Reason" , bg="#3b3d3c" , fg="white")
     reason_label.place(x=5 , y=50)
 
-
-    submit_button = tk.Button(prompt_window , text="Submit" , highlightthickness=0 , bd=0 , bg="#5b5b5b" , fg="white" , activebackground="#727272", command=lambda: fetch_usrinput(False))
-    submit_button.place(x=110 , y=90)
+    submit_button = Button("Submit" , size=(100 , 50) , pos=(90 , 85) , root=prompt_window , command=lambda: fetch_usrinput(False))
 
 def load_expenses(tree):
     try:
         for line in tree.get_children():
             tree.delete(line)
         with open("expenses.txt" , "r") as file:
-            for line in file.readlines():
+            for line in file.readlines(): 
                 line_contents = line.split(',')
                 tree.insert("" , "end" , values=(line_contents[0], line_contents[1] , line_contents[2]))
     except FileNotFoundError:
@@ -165,7 +167,7 @@ def add_all_amounts(label):
             amount = float(line_contents[0])
             value = convertion_rates[line_contents[1].strip()][user_currency] * amount
             sum_of_amounts += value
-    label.config(text=f"Sum: {round(sum_of_amounts , 2)} {user_currency}")
+    label.configure(text=f"Sum: {round(sum_of_amounts , 2)} {user_currency}")
 
 def del_selected_expense():
     global expenses , selection , full_date
@@ -208,7 +210,7 @@ def del_expense():
     expense_selector["menu"].config(bg=config["button_style"]["bg"] , activebackground=config["button_style"]["activebg"] , fg=config["button_style"]["fg"] , activeforeground=config["button_style"]["activefg"])
     expense_selector.place(x=25 , y=25)
 
-    delete_button = tk_Button("Proceed" , 10 , 3 , 170 , 60 , root=del_prompt , command=del_selected_expense)
+    delete_button = Button("Proceed" , size=(130 , 80) , pos=(150 , 40) , root=del_prompt , command=del_selected_expense)
 
 def edit_selected(count , amount , currency , reason):
     own_count = 1
@@ -218,7 +220,6 @@ def edit_selected(count , amount , currency , reason):
             line_content = line.split("," , 4)
             if own_count == count:
                 expenses.append(f"{amount} , {currency} , {reason}")
-                print(expenses)
             else:
                 expenses.append(f"{line_content[0].strip()} , {line_content[1].strip()} , {line_content[2].strip()}")
             own_count += 1
@@ -229,12 +230,12 @@ def edit_selected(count , amount , currency , reason):
 
 
 def reload_edit(count):
-    if selection.get() != "Select Expense.":
+    try:
+        count = int(count)
         edit_prompt.destroy()
         edit_expense(True , count)
-        return 0
-
-    messagebox.showerror("Expense not selected." , "Please select an expense before clicking submit!")
+    except ValueError:
+         messagebox.showerror("Expense not selected." , "Please select an expense before clicking submit!")
 
 def edit_expense(selection_set: bool , count: int):
     global edit_prompt , selection
@@ -249,7 +250,6 @@ def edit_expense(selection_set: bool , count: int):
     button_style = config["button_style"]
     
     expenses = []
-    count = count
 
     with open("expenses.txt" , "r") as file:
         for line in file.readlines():
@@ -283,11 +283,11 @@ def edit_expense(selection_set: bool , count: int):
                     return 0 
 
         selector = tk.OptionMenu(edit_prompt , selection , *expenses)
-        selector.config(bg=button_style["bg"] ,activebackground=button_style["activebg"], fg=button_style["fg"] , activeforeground=button_style["activefg"] , highlightthickness=button_style["highlightthickness"] , bd=button_style["border"])
-        selector["menu"].config(bg=button_style["bg"] ,activebackground=button_style["activebg"], fg=button_style["fg"] , activeforeground=button_style["activefg"] , bd=button_style["border"])
+        selector.config(bg=button_style["bg"] ,activebackground=button_style["activebg"], fg=button_style["fg"] , activeforeground=button_style["activefg"] , highlightthickness=0 , bd=0)
+        selector["menu"].config(bg=button_style["bg"] ,activebackground=button_style["activebg"], fg=button_style["fg"] , activeforeground=button_style["activefg"] , bd=0)
         selector.place(x=7 , y=15)
 
-        submit = tk_Button("Submit" , 10 , 3 , 20 , 60 , root=edit_prompt , command=lambda: reload_edit(int(selection.get()[1:-1].strip().split("," , 4)[0].strip().strip("'"))))
+        submit = Button("Submit" , size=(100 , 70) , pos=(13 , 60) , root=edit_prompt , command=lambda: reload_edit(selection.get()[1:-1].strip().split("," , 4)[0].strip().strip("'")))
 
     else:
         selection = selection.get()[1:-1].strip().split("," , 4)
@@ -316,8 +316,7 @@ def edit_expense(selection_set: bool , count: int):
         reason_label.place(x=5 , y=50)
 
 
-        submit_button = tk.Button(edit_prompt , text="Submit" , highlightthickness=0 , bd=0 , bg="#5b5b5b" , fg="white" , activebackground="#727272", command=lambda: edit_selected(int(selection[0]) , user_input_amount.get() , user_input_currency.get() , user_input_reason.get()))
-        submit_button.place(x=110 , y=90)
+        submit_button = Button(text="Submit" , size=(100 , 50) , pos=(90 , 85) ,root=edit_prompt, command=lambda: edit_selected(int(selection[0]) , user_input_amount.get() , user_input_currency.get() , user_input_reason.get()))
 
     
     
